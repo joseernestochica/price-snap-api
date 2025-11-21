@@ -42,7 +42,13 @@ requests/
 │   └── User-Delete-Images.bru   # DELETE /api/file/user/:id
 ├── Mail/                        # Endpoints de envío de emails
 │   ├── folder.bru               # Descripción de la colección Mail
-│   └── Enviar email.bru         # POST /api/mail/send
+│   ├── Enviar email.bru         # POST /api/mail/send (síncrono)
+│   ├── Enviar email con template.bru # POST /api/mail/send-template
+│   ├── Enviar alerta de precio.bru # POST /api/mail/send-template (price-alert)
+│   ├── Enviar email de bienvenida.bru # POST /api/mail/send-template (welcome)
+│   ├── Enviar email en cola.bru # POST /api/mail/send-queue (asíncrono)
+│   ├── Enviar template en cola.bru # POST /api/mail/send-template-queue
+│   └── Estado de la cola.bru    # GET /api/mail/queue-status
 └── Test/                        # Usuarios de prueba
     ├── folder.bru
     ├── Crear Usuario Admin.bru
@@ -100,7 +106,13 @@ bruno
 21. **Insertar usuarios de prueba** - Inserta 30 usuarios de prueba en la base de datos
 
 #### Mail (envío de emails):
-22. **Enviar email** - Envía un email usando el servicio SMTP configurado (requiere rol admin)
+22. **Enviar email** - Envía un email usando el servicio SMTP configurado (síncrono, requiere rol admin)
+23. **Enviar email con template** - Envía un email usando templates de Handlebars (síncrono)
+24. **Enviar alerta de precio** - Ejemplo de template price-alert
+25. **Enviar email de bienvenida** - Ejemplo de template welcome
+26. **Enviar email en cola** - Encola un email para procesamiento asíncrono con BullMQ
+27. **Enviar template en cola** - Encola un template para procesamiento asíncrono
+28. **Estado de la cola** - Obtiene el estado actual de la cola de emails
 
 ## 🔧 Variables de entorno
 

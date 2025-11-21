@@ -1,0 +1,89 @@
+meta {
+  name: Obtener log por ID
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/mail/logs/{{logId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+vars {
+  logId: 
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('statusCode');
+    expect(body).to.have.property('data');
+  });
+  
+  test("Response indicates success", function () {
+    const body = res.getBody();
+    expect(body.ok).to.equal(true);
+    expect(body.statusCode).to.equal(200);
+  });
+  
+  test("Response contains log data", function () {
+    const body = res.getBody();
+    expect(body.data).to.have.property('id');
+    expect(body.data).to.have.property('to');
+    expect(body.data).to.have.property('from');
+    expect(body.data).to.have.property('subject');
+    expect(body.data).to.have.property('status');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene un log de email específico por su ID.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Parámetros:
+  - logId (en URL): UUID del log a obtener
+  
+  Respuesta exitosa: 200 con estructura:
+  {
+    "ok": true,
+    "message": "Email log retrieved successfully",
+    "statusCode": 200,
+    "data": {
+      "id": "uuid",
+      "to": "destinatario@example.com",
+      "from": "remitente@example.com",
+      "subject": "Asunto",
+      "template": "test",
+      "status": "sent",
+      "error": null,
+      "sentAt": "2025-01-01T12:00:00Z",
+      "attempts": 1,
+      "jobId": "123",
+      "createdAt": "2025-01-01T12:00:00Z",
+      "updatedAt": "2025-01-01T12:00:00Z"
+    }
+  }
+  
+  Errores comunes:
+  - 401: No autenticado o token inválido
+  - 403: Usuario no tiene rol de admin
+  - 404: Log no encontrado
+}
+

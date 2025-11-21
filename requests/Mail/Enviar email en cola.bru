@@ -1,0 +1,68 @@
+meta {
+  name: Enviar email en cola
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/mail/send-queue?useQueue=true
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "to": "urbecomsl@gmail.com",
+    "subject": "Email desde Cola - PriceSnap",
+    "html": "<h1>Email desde Cola</h1><p>Este email fue procesado de forma asíncrona usando BullMQ.</p><p>El servidor no se bloqueó durante el envío.</p>",
+    "from": "joseernestochica@gmail.com"
+  }
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response indicates queued", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('data');
+    expect(body.data).to.have.property('queued');
+    expect(body.data.queued).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Envía un email usando la cola de BullMQ (procesamiento asíncrono).
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Query params:
+  - useQueue=true: Usa la cola (procesamiento asíncrono)
+  - useQueue=false o omitir: Envía directamente (síncrono)
+  
+  Parámetros:
+  - to (requerido): Email del destinatario
+  - subject (requerido): Asunto del email
+  - html (requerido): Contenido HTML del email
+  - from (opcional): Email del remitente
+  
+  Ventajas de usar la cola:
+  - No bloquea el servidor
+  - Reintentos automáticos en caso de fallo
+  - Escalable con múltiples workers
+  - Mejor rendimiento en envíos masivos
+  
+  Respuesta exitosa: 200 con queued: true
+}
+

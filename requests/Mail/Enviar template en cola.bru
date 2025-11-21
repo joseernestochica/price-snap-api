@@ -1,0 +1,56 @@
+meta {
+  name: Enviar template en cola
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/mail/send-template-queue?useQueue=true
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "to": "urbecomsl@gmail.com",
+    "template": "test",
+    "subject": "Template desde Cola",
+    "context": {
+      "message": "Este email fue procesado usando BullMQ",
+      "timestamp": "2024-01-15T10:30:00Z"
+    }
+  }
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response indicates queued", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body.data).to.have.property('queued');
+    expect(body.data.queued).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Envía un email con template usando la cola de BullMQ.
+  
+  Query params:
+  - useQueue=true: Usa la cola (procesamiento asíncrono)
+  - useQueue=false: Envía directamente (síncrono)
+  
+  El job se procesará en segundo plano y el email se enviará automáticamente.
+}
+

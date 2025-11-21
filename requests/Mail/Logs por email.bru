@@ -1,0 +1,97 @@
+meta {
+  name: Logs por email
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/mail/logs/email/{{email}}?limit=50
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+vars {
+  email: urbecomsl@gmail.com
+}
+
+params:query {
+  limit: 50
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('statusCode');
+    expect(body).to.have.property('data');
+    expect(body).to.have.property('count');
+  });
+  
+  test("Response indicates success", function () {
+    const body = res.getBody();
+    expect(body.ok).to.equal(true);
+    expect(body.statusCode).to.equal(200);
+  });
+  
+  test("Response contains logs array", function () {
+    const body = res.getBody();
+    expect(body.data).to.be.an('array');
+    expect(body.count).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene todos los logs de emails enviados a un destinatario específico.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Parámetros:
+  - email (en URL): Email del destinatario
+  - limit (query, opcional): Límite de resultados (default: 50, máximo recomendado: 100)
+  
+  Respuesta exitosa: 200 con estructura:
+  {
+    "ok": true,
+    "message": "Email logs retrieved successfully",
+    "statusCode": 200,
+    "data": [
+      {
+        "id": "uuid",
+        "to": "destinatario@example.com",
+        "from": "remitente@example.com",
+        "subject": "Asunto",
+        "template": "test",
+        "status": "sent",
+        "error": null,
+        "sentAt": "2025-01-01T12:00:00Z",
+        "attempts": 1,
+        "jobId": "123",
+        "createdAt": "2025-01-01T12:00:00Z",
+        "updatedAt": "2025-01-01T12:00:00Z"
+      }
+    ],
+    "count": 25
+  }
+  
+  Los logs están ordenados por fecha de creación descendente (más recientes primero).
+  
+  Errores comunes:
+  - 401: No autenticado o token inválido
+  - 403: Usuario no tiene rol de admin
+  - 400: Email inválido
+}
+

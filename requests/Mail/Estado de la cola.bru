@@ -1,0 +1,56 @@
+meta {
+  name: Estado de la cola
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/mail/queue-status
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains queue status", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('data');
+    expect(body.data).to.have.property('waiting');
+    expect(body.data).to.have.property('active');
+    expect(body.data).to.have.property('completed');
+    expect(body.data).to.have.property('failed');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene el estado actual de la cola de emails.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Respuesta:
+  {
+    "ok": true,
+    "message": "Queue status retrieved successfully",
+    "statusCode": 200,
+    "data": {
+      "waiting": 0,      // Jobs esperando procesar
+      "active": 0,       // Jobs siendo procesados
+      "completed": 5,    // Jobs completados exitosamente
+      "failed": 0        // Jobs fallidos
+    }
+  }
+}
+

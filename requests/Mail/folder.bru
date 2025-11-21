@@ -13,13 +13,22 @@ docs {
   - Producción: Servicio de email transaccional (SendGrid, Mailgun, etc.)
   
   Endpoints disponibles:
-  - POST /mail/send: Envío de email con HTML personalizado
-  - POST /mail/send-template: Envío de email usando templates de Handlebars
+  - POST /mail/send: Envío de email con HTML personalizado (síncrono)
+  - POST /mail/send-template: Envío de email usando templates de Handlebars (síncrono)
+  - POST /mail/send-queue: Envío de email usando cola BullMQ (asíncrono)
+  - POST /mail/send-template-queue: Envío de template usando cola BullMQ (asíncrono)
+  - GET /mail/queue-status: Estado de la cola de emails
   
   Templates disponibles:
   - test: Template de prueba
   - price-alert: Alerta de cambio de precio
   - welcome: Email de bienvenida
+  
+  Ventajas de usar cola (BullMQ):
+  - No bloquea el servidor
+  - Reintentos automáticos (3 intentos con backoff exponencial)
+  - Escalable con múltiples workers
+  - Mejor rendimiento en envíos masivos
   
   Ver docs/EMAIL_SETUP.md para configuración detallada.
 }

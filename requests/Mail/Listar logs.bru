@@ -1,0 +1,103 @@
+meta {
+  name: Listar logs
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/mail/logs?page=1&limit=10&sortColumn=createdAt&sortDirection=DESC
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+params:query {
+  page: 1
+  limit: 10
+  email: 
+  status: 
+  template: 
+  sortColumn: createdAt
+  sortDirection: DESC
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('statusCode');
+    expect(body).to.have.property('data');
+    expect(body).to.have.property('total');
+    expect(body).to.have.property('page');
+  });
+  
+  test("Response indicates success", function () {
+    const body = res.getBody();
+    expect(body.ok).to.equal(true);
+    expect(body.statusCode).to.equal(200);
+  });
+  
+  test("Response contains logs array", function () {
+    const body = res.getBody();
+    expect(body.data).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Lista los logs de emails enviados con paginación y filtros.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Parámetros de consulta (todos opcionales):
+  - page: Número de página (default: 1)
+  - limit: Elementos por página (default: 10)
+  - email: Filtrar por email destinatario
+  - status: Filtrar por estado (pending, sent, failed)
+  - template: Filtrar por nombre de template
+  - sortColumn: Columna para ordenar (default: createdAt)
+  - sortDirection: Dirección de ordenamiento ASC o DESC (default: DESC)
+  
+  Respuesta exitosa: 200 con estructura:
+  {
+    "ok": true,
+    "message": "Email logs retrieved successfully",
+    "statusCode": 200,
+    "data": [
+      {
+        "id": "uuid",
+        "to": "destinatario@example.com",
+        "from": "remitente@example.com",
+        "subject": "Asunto",
+        "template": "test",
+        "status": "sent",
+        "error": null,
+        "sentAt": "2025-01-01T12:00:00Z",
+        "attempts": 1,
+        "jobId": "123",
+        "createdAt": "2025-01-01T12:00:00Z",
+        "updatedAt": "2025-01-01T12:00:00Z"
+      }
+    ],
+    "total": 100,
+    "page": 1,
+    "lastPage": 10
+  }
+  
+  Errores comunes:
+  - 401: No autenticado o token inválido
+  - 403: Usuario no tiene rol de admin
+}
+
