@@ -17,9 +17,10 @@ export class MailService {
 		const pass = this.configService.get<string>( 'SMTP_PASS' );
 		this.defaultFrom = this.configService.get<string>( 'SMTP_FROM', user || 'no-reply@example.com' );
 
-		// Configuración especial para Gmail
+		// Configuración especial para diferentes proveedores
 		const isGmail = host?.includes( 'gmail.com' );
-		
+		const isSendGrid = host?.includes( 'sendgrid.net' );
+
 		if ( isGmail ) {
 			// Para Gmail, usar 'service: gmail' simplifica la configuración
 			this.transporter = nodemailer.createTransport( {
@@ -27,6 +28,16 @@ export class MailService {
 				auth: user && pass ? { user, pass } : undefined,
 			} );
 			this.logger.log( 'Configurado para Gmail con App Password' );
+		} else if ( isSendGrid ) {
+			// Para SendGrid, usar configuración SMTP estándar
+			// SendGrid requiere SMTP_USER=apikey y SMTP_PASS=tu-api-key
+			this.transporter = nodemailer.createTransport( {
+				host: 'smtp.sendgrid.net',
+				port: 587,
+				secure: false,
+				auth: user && pass ? { user, pass } : undefined,
+			} );
+			this.logger.log( 'Configurado para SendGrid' );
 		} else {
 			// Para otros proveedores SMTP, usar configuración estándar
 			this.transporter = nodemailer.createTransport( {
@@ -35,6 +46,7 @@ export class MailService {
 				secure,
 				auth: user && pass ? { user, pass } : undefined,
 			} );
+			this.logger.log( `Configurado para SMTP: ${ host }` );
 		}
 
 	}

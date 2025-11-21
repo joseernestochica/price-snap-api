@@ -1,0 +1,89 @@
+meta {
+  name: Enviar email
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/mail/send
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "to": "urbecomsl@gmail.com",
+    "subject": "Prueba de Email - PriceSnap",
+    "html": "<h1>Email de Prueba</h1><p>Este es un email de prueba desde PriceSnap API.</p><p>Si recibes este mensaje, la configuración SMTP está funcionando correctamente.</p>",
+    "from": "joseernestochica@gmail.com"
+  }
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('statusCode');
+    expect(body).to.have.property('data');
+  });
+  
+  test("Response indicates success", function () {
+    const body = res.getBody();
+    expect(body.ok).to.equal(true);
+    expect(body.statusCode).to.equal(200);
+  });
+  
+  test("Response contains email data", function () {
+    const body = res.getBody();
+    expect(body.data).to.have.property('to');
+    expect(body.data).to.have.property('subject');
+    expect(body.data).to.have.property('html');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Envía un email usando el servicio SMTP configurado.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Parámetros:
+  - to (requerido): Email del destinatario
+  - subject (requerido): Asunto del email
+  - html (requerido): Contenido HTML del email
+  - from (opcional): Email del remitente. Si no se especifica, usa SMTP_FROM de las variables de entorno
+  
+  Nota: Para Gmail, el campo 'from' será reemplazado automáticamente por el email autenticado (SMTP_USER).
+  
+  Respuesta exitosa: 200 con estructura:
+  {
+    "ok": true,
+    "message": "Email sent successfully",
+    "statusCode": 200,
+    "data": {
+      "to": "destinatario@example.com",
+      "subject": "Asunto",
+      "html": "<h1>Contenido</h1>",
+      "from": "remitente@example.com"
+    }
+  }
+  
+  Errores comunes:
+  - 401: No autenticado o token inválido
+  - 403: Usuario no tiene rol de admin
+  - 400: Validación fallida (email inválido, campos requeridos faltantes)
+  - 500: Error de configuración SMTP o conexión
+}

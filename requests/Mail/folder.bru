@@ -1,0 +1,17 @@
+meta {
+  name: Mail
+  seq: 4
+}
+
+docs {
+  Endpoints para envío de emails.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Configuración SMTP:
+  - Desarrollo: Gmail con App Password
+  - Producción: Servicio de email transaccional (SendGrid, Mailgun, etc.)
+  
+  Ver docs/EMAIL_SETUP.md para configuración detallada.
+}
+

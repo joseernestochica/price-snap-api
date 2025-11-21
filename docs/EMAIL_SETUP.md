@@ -109,6 +109,35 @@ SMTP_FROM=miempresa@gmail.com
 
 ---
 
+## 🔄 Usar SendGrid en Desarrollo (Opcional)
+
+Si prefieres usar SendGrid también en desarrollo para probar con el mismo servicio que usarás en producción:
+
+### Ventajas de usar SendGrid en desarrollo:
+- ✅ Mismo servicio que producción (menos sorpresas)
+- ✅ Analytics desde el principio
+- ✅ Mejor deliverability
+- ✅ 100 emails gratis por día
+
+### Configuración:
+
+1. Sigue los pasos de SendGrid más abajo (Paso 1 y 3)
+2. No necesitas verificar dominio para desarrollo (puedes usar email de prueba)
+3. Actualiza tu `.env` o `env.development`:
+
+```env
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=apikey
+SMTP_PASS=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Tu API Key de SendGrid
+SMTP_FROM=noreply@pricesnap.dev                     # Puede ser un email de prueba
+```
+
+**Nota**: Para desarrollo, Gmail es más rápido de configurar. SendGrid es útil si quieres probar analytics o usar el mismo servicio que en producción.
+
+---
+
 ## 🏢 Configuración para PRODUCCIÓN (Dominio Propio)
 
 Cuando tengas un dominio propio (ej: `pricesnap.com`), puedes usar diferentes proveedores:
@@ -138,24 +167,95 @@ Para producción, se recomienda usar servicios especializados:
 
 #### **SendGrid** (Recomendado)
 
-1. **Crear cuenta**: https://sendgrid.com/
-2. **Verificar dominio**: Agrega los registros DNS que te proporcionan
-3. **Generar API Key**: Dashboard → Settings → API Keys → Create API Key
-4. **Configuración**:
-   ```env
-   SMTP_HOST=smtp.sendgrid.net
-   SMTP_PORT=587
-   SMTP_SECURE=false
-   SMTP_USER=apikey                                    # Literalmente "apikey"
-   SMTP_PASS=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Tu API Key de SendGrid
-   SMTP_FROM=noreply@pricesnap.com
-   ```
+SendGrid es ideal para producción: ofrece excelente deliverability, analytics y escalabilidad.
 
-**Ventajas**:
-- ✅ 100 emails gratis por día (plan gratuito)
-- ✅ Excelente deliverability
-- ✅ Analytics y tracking
-- ✅ Escalable
+##### Paso 1: Crear cuenta en SendGrid
+
+1. Ve a https://sendgrid.com/
+2. Haz clic en **"Start for free"** o **"Sign Up"**
+3. Completa el formulario de registro:
+   - Email
+   - Contraseña
+   - Nombre de la empresa
+   - País
+4. Verifica tu email (revisa tu bandeja de entrada)
+
+##### Paso 2: Verificar tu dominio (Recomendado para producción)
+
+**Nota**: Puedes empezar sin verificar dominio, pero tendrás límites más estrictos.
+
+1. En el Dashboard de SendGrid, ve a **Settings** → **Sender Authentication**
+2. Haz clic en **"Authenticate Your Domain"**
+3. Selecciona tu proveedor DNS (ej: Cloudflare, GoDaddy, etc.)
+4. SendGrid te proporcionará registros DNS que debes agregar:
+   - **CNAME records** (3 registros)
+   - **TXT record** (1 registro)
+5. Agrega estos registros en tu proveedor DNS
+6. Espera a que SendGrid verifique (puede tardar hasta 24 horas, normalmente menos)
+
+**Ejemplo de registros DNS**:
+```
+CNAME: em1234.pricesnap.com → u1234567.wl123.sendgrid.net
+CNAME: s1._domainkey.pricesnap.com → s1.domainkey.u1234567.wl123.sendgrid.net
+CNAME: s2._domainkey.pricesnap.com → s2.domainkey.u1234567.wl123.sendgrid.net
+TXT: pricesnap.com → v=spf1 include:sendgrid.net ~all
+```
+
+##### Paso 3: Crear API Key para SMTP
+
+1. En el Dashboard, ve a **Settings** → **API Keys**
+2. Haz clic en **"Create API Key"**
+3. Nombre: "PriceSnap API SMTP" o "PriceSnap Production"
+4. Permisos: Selecciona **"Full Access"** o **"Restricted Access"** con permisos de "Mail Send"
+5. Haz clic en **"Create & View"**
+6. **⚠️ IMPORTANTE**: Copia la API Key inmediatamente (solo se muestra una vez)
+   - Formato: `SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+   - Guárdala en un lugar seguro
+
+##### Paso 4: Configurar variables de entorno
+
+Para **producción** (`env.production` o variables del servidor):
+
+```env
+# Email - Notificaciones SMTP (SendGrid para Producción)
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=apikey                                    # Literalmente "apikey" (no cambiar)
+SMTP_PASS=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # Tu API Key de SendGrid (la que copiaste)
+SMTP_FROM=noreply@pricesnap.com                    # Tu dominio verificado (ej: noreply@tudominio.com)
+```
+
+**Ejemplo real**:
+```env
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=apikey
+SMTP_PASS=SG.abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
+SMTP_FROM=noreply@pricesnap.com
+```
+
+##### Paso 5: Verificar la configuración
+
+1. Reinicia tu servidor de producción
+2. Prueba el endpoint de envío de email
+3. Revisa el Dashboard de SendGrid → **Activity** para ver los emails enviados
+
+**Ventajas de SendGrid**:
+- ✅ **100 emails gratis por día** (plan gratuito)
+- ✅ **Excelente deliverability** (menos probabilidad de spam)
+- ✅ **Analytics avanzados**: aperturas, clics, rebotes, bounces
+- ✅ **Escalable**: hasta millones de emails
+- ✅ **Templates**: editor visual de emails
+- ✅ **API REST**: además de SMTP
+- ✅ **Webhooks**: notificaciones de eventos
+- ✅ **Soporte**: email y chat (en planes pagos)
+
+**Límites del plan gratuito**:
+- 100 emails por día
+- Hasta 40,000 emails por mes
+- Sin límite de tiempo (siempre gratis)
 
 #### **Mailgun**
 

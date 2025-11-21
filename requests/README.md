@@ -40,6 +40,9 @@ requests/
 │   ├── User-Get-Image.bru       # GET /api/file/user/:imageName/:id
 │   ├── User-Upload-Images.bru   # POST /api/file/user/:id
 │   └── User-Delete-Images.bru   # DELETE /api/file/user/:id
+├── Mail/                        # Endpoints de envío de emails
+│   ├── folder.bru               # Descripción de la colección Mail
+│   └── Enviar email.bru         # POST /api/mail/send
 └── Test/                        # Usuarios de prueba
     ├── folder.bru
     ├── Crear Usuario Admin.bru
@@ -96,6 +99,9 @@ bruno
 #### Seed (datos de prueba):
 21. **Insertar usuarios de prueba** - Inserta 30 usuarios de prueba en la base de datos
 
+#### Mail (envío de emails):
+22. **Enviar email** - Envía un email usando el servicio SMTP configurado (requiere rol admin)
+
 ## 🔧 Variables de entorno
 
 ### Development
@@ -130,6 +136,7 @@ bruno
 - Los endpoints siguen el patrón REST estándar
 - Las respuestas utilizan la estructura GetResponse<T> con data, message, statusCode
 - Los endpoints de administración requieren roles 'admin' o 'expert'
+- El endpoint de envío de email requiere rol 'admin'
 - El directorio Test/ contiene archivos para crear usuarios de prueba
 - Los usuarios se eliminan con soft delete (marcados como eliminados)
 - Los refresh tokens tienen expiración de 7 días
