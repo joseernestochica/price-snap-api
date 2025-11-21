@@ -1,0 +1,93 @@
+meta {
+  name: Enviar email con template
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/mail/send-template
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "to": "urbecomsl@gmail.com",
+    "template": "test",
+    "subject": "Prueba de Template System",
+    "context": {
+      "message": "Este es un email de prueba del sistema de templates",
+      "timestamp": "2024-01-15T10:30:00Z"
+    }
+  }
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body).to.have.property('message');
+    expect(body).to.have.property('statusCode');
+    expect(body).to.have.property('data');
+  });
+  
+  test("Response indicates success", function () {
+    const body = res.getBody();
+    expect(body.ok).to.equal(true);
+    expect(body.statusCode).to.equal(200);
+  });
+  
+  test("Response contains template info", function () {
+    const body = res.getBody();
+    expect(body.data).to.have.property('template');
+    expect(body.data.template).to.equal('test');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Envía un email usando un template de Handlebars.
+  
+  Requiere: Bearer token válido con rol de ADMIN
+  
+  Parámetros:
+  - to (requerido): Email del destinatario
+  - template (requerido): Nombre del template (sin extensión .hbs)
+    - "test": Template de prueba
+    - "price-alert": Alerta de cambio de precio
+    - "welcome": Email de bienvenida
+  - context (requerido): Objeto con datos para el template
+  - subject (opcional): Asunto del email (puede venir del template)
+  - from (opcional): Email del remitente
+  
+  Templates disponibles:
+  - test: Template simple para pruebas
+  - price-alert: Alerta de cambio de precio (requiere: productName, oldPrice, newPrice, competitorName, changePercentage, userName, productUrl)
+  - welcome: Email de bienvenida (requiere: userName, planName, dashboardUrl)
+  
+  Respuesta exitosa: 200 con estructura:
+  {
+    "ok": true,
+    "message": "Email with template sent successfully",
+    "statusCode": 200,
+    "data": {
+      "to": "destinatario@example.com",
+      "template": "test",
+      "subject": "Generated from template",
+      "from": "remitente@example.com"
+    }
+  }
+}
+

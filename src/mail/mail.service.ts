@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { MailTemplateService } from './mail-template.service';
+import { EmailTemplateContext } from './interfaces/email-template.interface';
 
 @Injectable()
 export class MailService {
@@ -8,7 +10,10 @@ export class MailService {
 	private transporter: nodemailer.Transporter;
 	private readonly defaultFrom: string;
 
-	constructor ( private readonly configService: ConfigService ) {
+	constructor (
+		private readonly configService: ConfigService,
+		private readonly mailTemplateService: MailTemplateService,
+	) {
 
 		const host = this.configService.get<string>( 'SMTP_HOST' );
 		const port = this.configService.get<number>( 'SMTP_PORT' ) || 587;
@@ -56,6 +61,38 @@ export class MailService {
 		const fromAddress = from || this.defaultFrom;
 		await this.transporter.sendMail( { to, subject, html, from: fromAddress } );
 		this.logger.log( `Email enviado a ${ to } con asunto "${ subject }"` );
+
+	}
+
+	/**
+	 * Envía un email usando un template de Handlebars
+	 * @param to Email del destinatario
+	 * @param template Nombre del template (sin extensión .hbs)
+	 * @param context Contexto con datos para el template
+	 * @param subject Asunto del email (opcional, puede venir del template)
+	 * @param from Email del remitente (opcional)
+	 */
+	async sendTemplateEmail (
+		to: string,
+		template: string,
+		context: EmailTemplateContext,
+		subject?: string,
+		from?: string,
+	): Promise<void> {
+
+		// Renderizar el template
+		const html = this.mailTemplateService.renderTemplate( {
+			template,
+			context,
+			subject,
+		} );
+
+		// Obtener el subject del template si no se proporcionó
+		const emailSubject = subject || this.mailTemplateService.getSubject( template, context ) || 'Notificación de PriceSnap';
+
+		// Enviar el email
+		await this.sendEmail( to, emailSubject, html, from );
+		this.logger.log( `Email con template "${ template }" enviado a ${ to }` );
 
 	}
 }

@@ -12,6 +12,15 @@ docs {
   - Desarrollo: Gmail con App Password
   - Producción: Servicio de email transaccional (SendGrid, Mailgun, etc.)
   
+  Endpoints disponibles:
+  - POST /mail/send: Envío de email con HTML personalizado
+  - POST /mail/send-template: Envío de email usando templates de Handlebars
+  
+  Templates disponibles:
+  - test: Template de prueba
+  - price-alert: Alerta de cambio de precio
+  - welcome: Email de bienvenida
+  
   Ver docs/EMAIL_SETUP.md para configuración detallada.
 }
 

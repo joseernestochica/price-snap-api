@@ -1,0 +1,121 @@
+# Reglas de Cursor para Miopo Admin API
+
+## Stack Tecnológico
+- NestJS con TypeScript (Node.js >=22.x)
+- TypeORM con PostgreSQL
+- Usa inyección de dependencias de NestJS siempre
+- Valida con class-validator y class-transformer
+- Usa HandleErrorService para manejo de errores HTTP
+
+## Convenciones de Código
+
+### Estilo y Formato
+- Usa espacios (no tabs) con indentación de 2 espacios
+- Usa async/await siempre, nunca promesas con .then()
+- Nombres descriptivos y completos: ProcessCsvThemeHelper, no PctHelper
+- Usa snake_case para nombres de archivos si aplica
+
+### Orden de Miembros en Clases
+**IMPORTANTE - Orden obligatorio:**
+
+1. **Propiedades privadas** al principio
+2. **Propiedades públicas** después de las privadas
+3. **Constructor**
+4. **Métodos privados** al principio (después del constructor)
+5. **Métodos públicos** al final
+
+Ejemplo de orden correcto:
+```typescript
+export class Example {
+  // 1. Propiedades privadas primero
+  private privateProp: string;
+  private privateArray: string[];
+  
+  // 2. Propiedades públicas después
+  public publicProp: number;
+  
+  // 3. Constructor
+  constructor(private readonly service: Service) {}
+  
+  // 4. Métodos privados al principio
+  private privateMethod(): void {}
+  private async privateAsyncMethod(): Promise<void> {}
+  
+  // 5. Métodos públicos al final
+  public publicMethod(): void {}
+  public async run(): Promise<Result> {}
+}
+```
+
+## Estructura de Archivos
+- Helpers en carpeta `helpers/`
+- DTOs en carpeta `dto/`
+- Entidades en carpeta `entities/`
+- Servicios en carpeta `services/` o directamente en el módulo según estructura
+- Siempre exporta clases con nombres descriptivos y completos
+- Interfaces y tipos al inicio del archivo (antes de las clases)
+ - Siempre incluir archivo de barril `index.ts` en cada directorio de módulo exportando:
+   - `*.module`
+   - subcarpetas `entities`, `dto`, `services`, `helpers`, `interfaces`
+   - evitar exportar `*.spec.ts` o archivos internos marcados como privados
+
+## Manejo de Errores
+- Usa HandleErrorService para errores HTTP (handleBadRequestException, handleNotFoundException, etc.)
+- Transacciones de BD: siempre usa QueryRunner con try/catch/finally
+- Rollback en catch, release en finally
+- Limpia recursos temporales (temp files) en finally o métodos dedicados
+- Nunca uses throw new Error() directamente para errores HTTP, usa HandleErrorService
+
+## Base de Datos
+- Usa QueryRunner para transacciones complejas
+- Validaciones de duplicidad con `immutable_unaccent` y `regexp_replace`
+- Normaliza espacios con `regexp_replace(..., '\\s+', ' ', 'g')`
+- Usa `coalesce` para manejar valores null en comparaciones
+- Siempre valida parámetros antes de usar en consultas SQL (prevenir SQL injection)
+- Usa parámetros nombrados en queries TypeORM (:name, :value)
+
+## Seguridad
+- NUNCA uses interpolación directa en queries SQL
+- Valida UUIDs con ParseUUIDPipe cuando aplique
+- Sanitiza búsquedas con LIKE usando escapes apropiados
+- Valida todos los inputs del usuario antes de procesarlos
+
+## Validaciones
+- Valida archivos CSV: tamaño máximo, tipo MIME, extensión
+- Valida estructura de CSV: headers requeridos, consistencia de columnas
+- Valida datos por fila antes de procesar
+- Reporta errores específicos por línea/columna cuando sea posible
+
+## Gestión de Estado y Progreso
+- Crea registros de progreso antes de procesar
+- Actualiza progreso incrementalmente durante procesamiento
+- Guarda errores detallados en el registro de progreso
+- Limpia archivos temporales después de procesar
+
+## Imports
+- Organiza imports: NestJS, librerías externas, módulos del proyecto
+- Usa paths absolutos desde `src/` cuando esté configurado
+- Agrupa imports relacionados
+
+## Comentarios y Documentación
+- Comentarios descriptivos para lógica compleja (ej: validaciones de duplicidad)
+- Explica queries SQL complejas con comentarios
+- Documenta decisiones de diseño cuando no sean obvias
+
+## Configuración del Proyecto
+- Prefix global: `/api`
+- Puerto: 3001 por defecto
+- Swagger disponible en `/api`
+- CORS habilitado con origen `*`
+- Validación global con whitelist y forbidNonWhitelisted activados
+
+## Mensajes de Commit
+- Genera mensajes de commit detallados siguiendo Conventional Commits
+- Analiza TODOS los archivos modificados y nuevos
+- Incluye secciones por categoría: Entidades, Controladores, Servicios, DTOs, Migraciones, Tests, Scripts, etc.
+- Lista específicamente cada archivo nuevo y sus funcionalidades principales
+- Describe relaciones entre entidades (foreign keys, índices, constraints)
+- Menciona endpoints, validaciones, seguridad y cambios de configuración
+- Para migraciones SQL, describe tablas creadas, índices, constraints y funciones
+- No limites el mensaje: incluye toda la información relevante del cambio
+

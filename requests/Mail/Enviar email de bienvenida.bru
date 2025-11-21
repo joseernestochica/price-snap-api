@@ -1,0 +1,56 @@
+meta {
+  name: Enviar email de bienvenida
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/mail/send-template
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "to": "urbecomsl@gmail.com",
+    "template": "welcome",
+    "context": {
+      "userName": "José Ernesto",
+      "planName": "Growth",
+      "dashboardUrl": "https://pricesnap.dev/dashboard"
+    }
+  }
+}
+
+script:post-response {
+  test("Status code is 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response contains success structure", function () {
+    const body = res.getBody();
+    expect(body).to.have.property('ok');
+    expect(body.ok).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Envía un email de bienvenida usando el template welcome.
+  
+  Context requerido:
+  - userName: Nombre del usuario
+  - planName: Nombre del plan de suscripción
+  - dashboardUrl: URL del dashboard
+  
+  El subject se genera automáticamente si no se proporciona.
+}
+

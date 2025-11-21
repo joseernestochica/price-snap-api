@@ -1,0 +1,67 @@
+<h2 style="color: #333333; margin: 0 0 20px 0; font-size: 22px;">
+	🚨 Alerta de Cambio de Precio
+</h2>
+
+<p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
+	Hola <strong>{{userName}}</strong>,
+</p>
+
+<p style="color: #666666; line-height: 1.6; margin: 0 0 30px 0;">
+	Hemos detectado un cambio significativo en el precio de uno de tus productos monitoreados.
+</p>
+
+<!-- Product Card -->
+{{#if (gt changePercentage 0)}}
+<table role="presentation" style="width: 100%; background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #dc3545;">
+	{{else}}
+	<table role="presentation" style="width: 100%; background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745;">
+		{{/if}}
+		<tr>
+			<td>
+				<h3 style="margin: 0 0 15px 0; color: #333333; font-size: 18px;">
+					{{productName}}
+				</h3>
+				<p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;">
+					<strong>Competidor:</strong> {{competitorName}}
+				</p>
+				<table role="presentation" style="width: 100%; margin: 15px 0;">
+					<tr>
+						<td style="padding: 10px; background-color: #ffffff; border-radius: 4px;">
+							<p style="margin: 0; color: #666666; font-size: 12px;">Precio Anterior</p>
+							<p style="margin: 5px 0 0 0; color: #333333; font-size: 20px; font-weight: 600;">
+								{{currency oldPrice}}
+							</p>
+						</td>
+						<td style="width: 20px;"></td>
+						<td style="padding: 10px; background-color: #ffffff; border-radius: 4px;">
+							<p style="margin: 0; color: #666666; font-size: 12px;">Precio Actual</p>
+							{{#if (gt changePercentage 0)}}
+							<p style="margin: 5px 0 0 0; color: #dc3545; font-size: 20px; font-weight: 600;">
+								{{currency newPrice}}
+							</p>
+							{{else}}
+							<p style="margin: 5px 0 0 0; color: #28a745; font-size: 20px; font-weight: 600;">
+								{{currency newPrice}}
+							</p>
+							{{/if}}
+						</td>
+					</tr>
+				</table>
+				{{#if (gt changePercentage 0)}}
+				<p style="margin: 15px 0 0 0; color: #dc3545; font-size: 16px; font-weight: 600;">
+					⬆️ Subió {{percentage changePercentage}}
+				</p>
+				{{else}}
+				<p style="margin: 15px 0 0 0; color: #28a745; font-size: 16px; font-weight: 600;">
+					⬇️ Bajó {{percentage changePercentage}}
+				</p>
+				{{/if}}
+			</td>
+		</tr>
+	</table>
+
+	{{> button url=productUrl text="Ver Producto" color=brandColor}}
+
+	<p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.5;">
+		Este email fue enviado automáticamente por PriceSnap. Puedes gestionar tus alertas desde tu panel de control.
+	</p>
