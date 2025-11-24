@@ -266,6 +266,23 @@ export class AuthService {
 
 	}
 
+	async generateTokensForUser ( user: User, ip?: string ): Promise<{ token: string; refreshToken: string }> {
+		const refreshTokenUid = await this.createRefreshToken( user, ip || '127.0.0.1' );
+		
+		const token = this.getJwtToken( {
+			id: user.id,
+			email: user.email,
+			fullName: user.fullName,
+			role: user.roles[ 0 ] || 'user',
+			isTwoFactorEnabled: user.isTwoFactorEnabled || false,
+		} );
+
+		return {
+			token,
+			refreshToken: refreshTokenUid,
+		};
+	}
+
 	async checkAuthStatus ( user: User ): Promise<GetResponse<User>> {
 
 		delete ( user as any ).password;
