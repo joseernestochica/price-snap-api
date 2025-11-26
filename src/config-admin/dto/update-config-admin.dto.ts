@@ -3,3 +3,6 @@ import { CreateConfigAdminDto } from './create-config-admin.dto';
 
 export class UpdateConfigAdminDto extends PartialType( CreateConfigAdminDto ) { }
 
+
+
+
