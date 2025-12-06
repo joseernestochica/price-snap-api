@@ -268,7 +268,7 @@ export class AuthService {
 
 	async generateTokensForUser ( user: User, ip?: string ): Promise<{ token: string; refreshToken: string }> {
 		const refreshTokenUid = await this.createRefreshToken( user, ip || '127.0.0.1' );
-		
+
 		const token = this.getJwtToken( {
 			id: user.id,
 			email: user.email,

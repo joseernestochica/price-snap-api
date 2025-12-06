@@ -1,0 +1,25 @@
+meta {
+  name: 2FA desactivar
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/auth/2fa/disable
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+      "token": "488910"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

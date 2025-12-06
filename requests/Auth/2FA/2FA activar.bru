@@ -1,0 +1,19 @@
+meta {
+  name: 2FA activar
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/auth/2fa/enabled
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+settings {
+  encodeUrl: true
+}

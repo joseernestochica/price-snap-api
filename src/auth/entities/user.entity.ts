@@ -48,7 +48,7 @@ export class User {
 	isTwoFactorEnabled: boolean;
 
 	@Column( 'text', { nullable: true } )
-	twoFactorSecret: string;
+	twoFactorSecret: string | null;
 
 	@Column( 'text', { array: true, default: [ 'user' ] } )
 	roles: string[];

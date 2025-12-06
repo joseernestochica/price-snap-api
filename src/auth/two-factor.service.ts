@@ -21,17 +21,17 @@ export class TwoFactorService {
 
 		const secret = speakeasy.generateSecret( {
 			name: `PriceSnap (${ email })`,
-			issuer: 'PriceSnap'
+			length: 20
 		} );
 
-		const qrCodeUrl = await qrcode.toDataURL( secret.otpauth_url );
+		const otpauthUrl = secret.otpauth_url;
+		const qrCodeDataURL = await qrcode.toDataURL( otpauthUrl );
 
 		return {
 			data: {
 				secret: secret.base32,
-				qrCode: qrCodeUrl,
-				otpauthUrl: secret.otpauth_url
-
+				otpauthUrl,
+				qrCodeDataURL
 			},
 			message: 'Secret generated successfully',
 			statusCode: 200
@@ -40,7 +40,11 @@ export class TwoFactorService {
 	}
 
 	// Verifica el código 2FA introducido por el usuario
-	verifyCode ( encryptedSecret: string, token: string ): boolean {
+	verifyCode ( encryptedSecret: string | null | undefined, token: string ): boolean {
+
+		if ( !encryptedSecret ) {
+			return false;
+		}
 
 		const secret = this.encryptService.decrypt( encryptedSecret );
 
@@ -53,25 +57,44 @@ export class TwoFactorService {
 
 	}
 
-	// Guarda el secreto en la base de datos y activa el 2FA
+	// Guarda el secreto en la base de datos (sin activar el 2FA todavía)
 	async saveSecret2FA ( userId: string, secret: string ): Promise<void> {
 
 		const encryptedSecret = this.encryptService.encrypt( secret );
 
 		await this.userRepository.update( userId, {
-			twoFactorSecret: encryptedSecret,
-			isTwoFactorEnabled: true
+			twoFactorSecret: encryptedSecret
 		} );
 
 	}
 
-	// Desactiva el 2FA para el usuario
-	async disable2FA ( userId: string ): Promise<void> {
+	// Activa o desactiva el 2FA (sin modificar el secreto)
+	async set2faStatus ( userId: string, enabled: boolean ): Promise<GetResponse<any>> {
 
-		await this.userRepository.update( userId, {
-			twoFactorSecret: undefined,
-			isTwoFactorEnabled: false
-		} );
+		await this.userRepository.update( userId, { isTwoFactorEnabled: enabled } );
+
+		return {
+			data: { isTwoFactorEnabled: enabled },
+			message: enabled ? '2FA activado' : '2FA desactivado',
+			statusCode: 200
+		};
+
+	}
+
+	// Desactiva el 2FA validando el código y eliminando el secreto
+	async disable2fa ( user: User, token: string ): Promise<{ success: boolean; message: string }> {
+
+		if ( !user.twoFactorSecret ) {
+			return { success: false, message: '2fa_disabled' };
+		}
+
+		const isValid = this.verifyCode( user.twoFactorSecret, token );
+		if ( !isValid ) {
+			return { success: false, message: 'Código de verificación 2FA incorrecto' };
+		}
+
+		await this.userRepository.update( user.id, { isTwoFactorEnabled: false, twoFactorSecret: undefined } );
+		return { success: true, message: '2FA desactivado' };
 
 	}
 
@@ -84,24 +107,6 @@ export class TwoFactorService {
 		} );
 
 		return user?.isTwoFactorEnabled || false;
-
-	}
-
-	// Genera un código de respaldo
-	async generateBackupCodes ( userId: string ): Promise<GetResponse<string[]>> {
-
-		const backupCodes = Array.from( { length: 10 }, () =>
-			Math.random().toString( 36 ).substring( 2, 8 ).toUpperCase()
-		);
-
-		// Aquí podrías guardar los códigos de respaldo encriptados en la base de datos
-		// Por simplicidad, los devolvemos directamente
-
-		return {
-			data: backupCodes,
-			message: 'Backup codes generated',
-			statusCode: 200
-		};
 
 	}
 

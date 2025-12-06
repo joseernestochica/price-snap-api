@@ -1,0 +1,19 @@
+meta {
+  name: Comprobar si está activo el 2FA al usuario
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/auth/2fa/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+settings {
+  encodeUrl: true
+}

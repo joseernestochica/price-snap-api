@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de instalación automática para funciones SQL con Docker - PriceSnap API
+# Script de instalación automática para scripts SQL iniciales con Docker - PriceSnap API
 # Uso: ./scripts/install-sql-docker.sh [entorno]
 
 set -e  # Salir si hay errores
@@ -164,48 +164,12 @@ check_connection() {
     fi
 }
 
-# Función para verificar tablas requeridas
-check_required_tables() {
-    print_message "Verificando tablas requeridas..."
-    
-    if [[ "$ENVIRONMENT" == "dev" ]]; then
-        local tables_exist=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
-            SELECT COUNT(*) FROM information_schema.tables 
-            WHERE table_name IN ('users', 'products', 'competitors', 'price_history')
-            AND table_schema = 'public';
-        " | tr -d ' ')
-    else
-        local tables_exist=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
-            SELECT COUNT(*) FROM information_schema.tables 
-            WHERE table_name IN ('users', 'products', 'competitors', 'price_history')
-            AND table_schema = 'public';
-        " | tr -d ' ')
-    fi
-    
-    if [[ "$tables_exist" == "4" ]]; then
-        print_success "Tablas requeridas encontradas"
-    else
-        print_warning "Tablas requeridas no encontradas ($tables_exist/4)"
-        print_warning "Asegúrate de haber ejecutado las migraciones de TypeORM primero"
-        
-        if [[ "$ENVIRONMENT" == "dev" ]]; then
-            print_message "Para ejecutar migraciones en Docker:"
-            print_message "npm run migration:run"
-        fi
-        
-        read -p "¿Continuar de todas formas? (y/N): " continue_install
-        if [[ ! "$continue_install" =~ ^[Yy]$ ]]; then
-            print_message "Instalación cancelada"
-            exit 0
-        fi
-    fi
-}
 
-# Función para instalar funciones
-install_functions() {
-    print_message "Instalando funciones SQL..."
+# Función para instalar scripts SQL iniciales
+install_sql() {
+    print_message "Instalando scripts SQL iniciales..."
     
-    local sql_file="sql/install_all.sql"
+    local sql_file="sql/init/01_unaccent.sql"
     
     if [[ ! -f "$sql_file" ]]; then
         print_error "Archivo $sql_file no encontrado"
@@ -215,20 +179,20 @@ install_functions() {
     
     if [[ "$ENVIRONMENT" == "dev" ]]; then
         # Copiar archivo al contenedor y ejecutar
-        docker cp "$sql_file" "$CONTAINER_NAME:/tmp/install_all.sql"
+        docker cp "$sql_file" "$CONTAINER_NAME:/tmp/01_unaccent.sql"
         
-        if docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -f /tmp/install_all.sql; then
-            print_success "Funciones instaladas correctamente en Docker"
+        if docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -f /tmp/01_unaccent.sql; then
+            print_success "Scripts SQL instalados correctamente en Docker"
         else
-            print_error "Error al instalar las funciones en Docker"
+            print_error "Error al instalar los scripts SQL en Docker"
             exit 1
         fi
     else
         # Para otros entornos, conexión directa
         if PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$sql_file"; then
-            print_success "Funciones instaladas correctamente"
+            print_success "Scripts SQL instalados correctamente"
         else
-            print_error "Error al instalar las funciones"
+            print_error "Error al instalar los scripts SQL"
             exit 1
         fi
     fi
@@ -239,52 +203,69 @@ verify_installation() {
     print_message "Verificando instalación..."
     
     if [[ "$ENVIRONMENT" == "dev" ]]; then
-        local functions_count=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
-            SELECT COUNT(*) FROM pg_proc 
-            WHERE proname LIKE '%price%' 
-            OR proname LIKE '%scraping%'
-            OR proname LIKE '%product%';
+        # Verificar extensión unaccent
+        local extension_exists=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+            SELECT COUNT(*) FROM pg_extension WHERE extname = 'unaccent';
+        " | tr -d ' ')
+        
+        # Verificar función immutable_unaccent
+        local function_exists=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+            SELECT COUNT(*) FROM pg_proc WHERE proname = 'immutable_unaccent';
         " | tr -d ' ')
     else
-        local functions_count=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
-            SELECT COUNT(*) FROM pg_proc 
-            WHERE proname LIKE '%price%' 
-            OR proname LIKE '%scraping%'
-            OR proname LIKE '%product%';
+        # Verificar extensión unaccent
+        local extension_exists=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
+            SELECT COUNT(*) FROM pg_extension WHERE extname = 'unaccent';
+        " | tr -d ' ')
+        
+        # Verificar función immutable_unaccent
+        local function_exists=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
+            SELECT COUNT(*) FROM pg_proc WHERE proname = 'immutable_unaccent';
         " | tr -d ' ')
     fi
     
-    if [[ "$functions_count" -gt 0 ]]; then
-        print_success "Se instalaron $functions_count funciones correctamente"
+    if [[ "$extension_exists" == "1" && "$function_exists" == "1" ]]; then
+        print_success "Instalación verificada correctamente"
         
-        # Mostrar funciones instaladas
+        # Mostrar información instalada
         echo ""
-        print_message "Funciones instaladas:"
+        print_message "Extensiones instaladas:"
         if [[ "$ENVIRONMENT" == "dev" ]]; then
+            docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+                SELECT extname AS extension_name, extversion AS version
+                FROM pg_extension 
+                WHERE extname = 'unaccent';
+            "
+            echo ""
+            print_message "Funciones instaladas:"
             docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
                 SELECT 
                     proname AS function_name,
                     pg_get_function_identity_arguments(oid) AS arguments
                 FROM pg_proc 
-                WHERE proname LIKE '%price%' 
-                OR proname LIKE '%scraping%'
-                OR proname LIKE '%product%'
+                WHERE proname = 'immutable_unaccent'
                 ORDER BY proname;
             "
         else
+            PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+                SELECT extname AS extension_name, extversion AS version
+                FROM pg_extension 
+                WHERE extname = 'unaccent';
+            "
+            echo ""
+            print_message "Funciones instaladas:"
             PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
                 SELECT 
                     proname AS function_name,
                     pg_get_function_identity_arguments(oid) AS arguments
                 FROM pg_proc 
-                WHERE proname LIKE '%price%' 
-                OR proname LIKE '%scraping%'
-                OR proname LIKE '%product%'
+                WHERE proname = 'immutable_unaccent'
                 ORDER BY proname;
             "
         fi
     else
-        print_error "No se encontraron funciones instaladas"
+        print_error "No se encontraron las extensiones/funciones instaladas"
+        print_error "Extensión unaccent: $extension_exists, Función immutable_unaccent: $function_exists"
         exit 1
     fi
 }
@@ -314,8 +295,8 @@ show_usage_info() {
     fi
     
     echo ""
-    print_message "Ejemplo de uso de las funciones:"
-    echo "  SELECT insert_price_history('550e8400-e29b-41d4-a716-446655440000'::UUID, 15.99, 'success');"
+    print_message "Ejemplo de uso de la función immutable_unaccent:"
+    echo "  SELECT * FROM users WHERE immutable_unaccent(full_name) ILIKE immutable_unaccent('%búsqueda%');"
     echo ""
     print_message "Documentación completa en: sql/README.md"
 }
@@ -323,7 +304,7 @@ show_usage_info() {
 # Función principal
 main() {
     echo "=========================================="
-    echo "  Instalador SQL Docker - PriceSnap API"
+    echo "  Instalador SQL Inicial - PriceSnap API"
     echo "=========================================="
     echo ""
     
@@ -338,8 +319,7 @@ main() {
     check_docker
     check_container
     check_connection
-    check_required_tables
-    install_functions
+    install_sql
     verify_installation
     show_usage_info
 }

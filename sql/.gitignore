@@ -1,0 +1,24 @@
+# Archivos temporales de SQL
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Archivos de log de PostgreSQL
+*.log
+
+# Archivos de configuración local
+local_*.sql
+dev_*.sql
+test_*.sql
+
+# Archivos de datos sensibles
+*_data.sql
+*_secrets.sql
+
+# Archivos de migración temporal
+temp_*
+migration_*.sql
+
+# Archivos de backup automático
+auto_backup_*

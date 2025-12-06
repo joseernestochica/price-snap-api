@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { AuthController } from './auth.controller';
 import { GoogleController } from './google.controller';
+import { TwoFactorController } from './two-factor.controller';
 import { AuthService } from './auth.service';
 import { GoogleService } from './google.service';
 import { TwoFactorService } from './two-factor.service';
@@ -15,7 +16,7 @@ import { User, RefreshToken } from './entities';
 import { CommonModule } from 'src/common/common.module';
 
 @Module( {
-	controllers: [ AuthController, GoogleController ],
+	controllers: [ AuthController, GoogleController, TwoFactorController ],
 	providers: [ AuthService, GoogleService, TwoFactorService, JwtStrategy, UserRoleGuard ],
 	imports: [
 		ConfigModule,
