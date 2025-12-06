@@ -6,3 +6,6 @@ export class UpdateConfigAdminDto extends PartialType( CreateConfigAdminDto ) { 
 
 
 
+
+
+
