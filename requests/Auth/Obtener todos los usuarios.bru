@@ -5,13 +5,16 @@ meta {
 }
 
 get {
-  url: {{base_url}}/auth/users
+  url: {{base_url}}/auth/users?sgStr3=user&sgInt1=1
   body: none
   auth: bearer
 }
 
 params:query {
+  sgStr3: user
+  sgInt1: 1
   ~select: fullName
+  ~search: ernesto
 }
 
 auth:bearer {

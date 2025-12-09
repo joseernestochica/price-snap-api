@@ -141,8 +141,17 @@ export class AuthService {
 		if ( getParamsDto.sgStr2 && getParamsDto.sgStr2.trim() !== '' ) {
 			getParams.andWhere.push( { field: 'fullName', value: getParamsDto.sgStr2.trim() } );
 		}
-		if ( getParamsDto.sgInt1 ) {
-			getParams.andWhere.push( { field: 'isActive', value: getParamsDto.sgInt1 === 1 ? true : false } );
+		if ( getParamsDto.sgInt1 !== undefined && getParamsDto.sgInt1 !== null ) {
+			getParams.andWhere.push( { field: 'isActive', value: getParamsDto.sgInt1 === 1 } );
+		}
+		if ( getParamsDto.sgStr3 && getParamsDto.sgStr3.trim() !== '' ) {
+			if ( !getParams.rawAndWhere ) {
+				getParams.rawAndWhere = [];
+			}
+			getParams.rawAndWhere.push( {
+				query: `user.roles @> ARRAY[:role]`,
+				params: { role: getParamsDto.sgStr3.trim() }
+			} );
 		}
 
 		const getResponse = await createQueryBuilder<User>( this.userRepository, getParams, 'user' );
